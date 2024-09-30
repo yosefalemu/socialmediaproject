@@ -1,0 +1,48 @@
+services:
+  backend:
+    container_name: social_backend
+    build: 
+      context: ./backend
+      dockerfile: go.dockerfile
+    ports:
+      - 8888:8888
+    restart: on-failure
+    volumes:
+      - .:/usr/src/app
+    depends_on:
+      - social-postgres
+    networks:
+      - social
+  social-postgres:
+    image: postgres:latest
+    container_name: social_db_postgres
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+      - DATABASE_HOST=${DB_HOST}
+    ports:
+      - '5432:5432'
+    volumes:
+      - database_postgres:/var/lib/postgresql/data
+    networks:
+      - social
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin_container
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    depends_on:
+      - social-postgres
+    ports:
+      - "5050:80"
+    networks:
+      - social
+    restart: unless-stopped
+
+volumes:
+  database_postgres: {}
+networks:
+  social:
+    driver: bridge
